@@ -1,10 +1,10 @@
 using LoadFlow
-using CommonOPF
 using Ipopt, JuMP
 using NLPModelsJuMP, NLPModels
+using Test
+# TODO will not need all these dependencies in test env eventually
 
-
-@testset "" begin
+@testset "McCalley ISU example" begin
 
 
 # we need to solve:
@@ -15,7 +15,7 @@ using NLPModelsJuMP, NLPModels
 # to zero along with Δxⁱ 
     
 netdict = Dict(
-    :network => Dict(:substation_bus => "1", :Sbase => 1e3),
+    :network => Dict(:substation_bus => "1", :Sbase => 1),
     :conductors => [
         Dict(
             :busses => ("1", "2"),
@@ -46,7 +46,7 @@ netdict = Dict(
             :bus => "2",
             :kws1 => [-0.0006661],
             :kvars1 => [-.0016395]
-        )
+        ) # this should be a "generator" with P and V specified
     ]
 )
 
@@ -68,8 +68,12 @@ busses_no_sub = setdiff(busses(net), [net.substation_bus])
 
 x = Vector{Vector{Real}}()
 push!(x, copy(nlp.meta.x0))
+x[1][1] = 1.05  # v_mag["2"]
 
-for i = 1:5
+change_tol = 0.0001
+change = 1
+i = 1
+while change > change_tol
     J = jac(nlp, x[i])
     fxi = Vector{Real}()
     inp = Dict(
@@ -82,8 +86,16 @@ for i = 1:5
         push!(fxi, value(k -> inp[k], m[:deltaQ][b]))
     end
     Δxⁱ = J \ -fxi
+    change = maximum( Δxⁱ )
     push!(x, x[i] + Δxⁱ)
+    i += 1
+    x[end][1] = 1.05
 end
+# @test x[end][1] ≈ 1.05 rtol = change_tol * 10 # v_mag["2"]
+@test x[end][2] * 180/pi ≈ -3 rtol = change_tol * 10    # v_ang["2"]
+@test x[end][3] ≈ 0.9499 rtol = change_tol * 10   # v_mag["3"]
+@test x[end][4] * 180/pi ≈ -10.01 rtol = change_tol * 10   # v_ang["3"]
+
 
 
 ## another way:

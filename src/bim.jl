@@ -63,27 +63,27 @@ function define_power_with_admittance_bim(m::JuMP.AbstractModel, net::Network{Si
     # NOTE cannot put functions in NLconstraint unless it is truly part of the math
     # NOTE NLPModelsJuMP does not work with complex variables
     @NLexpression(m, deltaP[j in busses_no_sub],
-        pj[j] - (
+        -pj[j] + (
             v_mag[j] 
             * sum( v_mag[i] * (
                     G[i,j] # conductance
                 *   cos(v_ang[j] - v_ang[i])
                 +   B[i,j] # susceptance
                 *   sin(v_ang[j] - v_ang[i])
-            ) for i in union(i_to_j(j, net), j_to_k(j, net))
+            ) for i in union(i_to_j(j, net), j_to_k(j, net), [j])
             )
         )
     )
 
     @NLexpression(m, deltaQ[j in busses_no_sub],
-        qj[j] - (
+        -qj[j] + (
             v_mag[j] 
             * sum( v_mag[i] * (
                     G[i,j] # conductance
                 *   sin(v_ang[j] - v_ang[i])
                 -   B[i,j] # susceptance
                 *   cos(v_ang[j] - v_ang[i])
-            ) for i in union(i_to_j(j, net), j_to_k(j, net))
+            ) for i in union(i_to_j(j, net), j_to_k(j, net), [j])
             )
         )
     )
