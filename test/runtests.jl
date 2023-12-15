@@ -13,7 +13,7 @@ using Test
 # x⁽ⁱ⁺⁾ = xⁱ + Δxⁱ
 # until f(xⁱ) is within some tolerance (or Δxⁱ). f(xⁱ) contains the deltaP and deltaQ so it should go
 # to zero along with Δxⁱ 
-    
+
 netdict = Dict(
     :network => Dict(:substation_bus => "1", :Sbase => 1),
     :conductors => [
@@ -44,9 +44,14 @@ netdict = Dict(
         ),
         Dict(
             :bus => "2",
-            :kws1 => [-0.0006661],
-            :kvars1 => [-.0016395]
-        ) # this should be a "generator" with P and V specified
+            :kws1 => [-0.0006661]
+        ) # a "generator" with P and V specified
+    ],
+    :voltage_regulators => [
+        Dict(
+            :bus => "2",
+            :vreg_pu => 1.05
+        )
     ]
 )
 
@@ -68,7 +73,6 @@ busses_no_sub = setdiff(busses(net), [net.substation_bus])
 
 x = Vector{Vector{Real}}()
 push!(x, copy(nlp.meta.x0))
-x[1][1] = 1.05  # v_mag["2"]
 
 change_tol = 0.0001
 change = 1
@@ -89,12 +93,11 @@ while change > change_tol
     change = maximum( Δxⁱ )
     push!(x, x[i] + Δxⁱ)
     i += 1
-    x[end][1] = 1.05
 end
 # @test x[end][1] ≈ 1.05 rtol = change_tol * 10 # v_mag["2"]
-@test x[end][2] * 180/pi ≈ -3 rtol = change_tol * 10    # v_ang["2"]
-@test x[end][3] ≈ 0.9499 rtol = change_tol * 10   # v_mag["3"]
-@test x[end][4] * 180/pi ≈ -10.01 rtol = change_tol * 10   # v_ang["3"]
+@test x[end][1] * 180/pi ≈ -3 rtol = change_tol * 10    # v_ang["2"]
+@test x[end][2] ≈ 0.9499 rtol = change_tol * 10   # v_mag["3"]
+@test x[end][3] * 180/pi ≈ -10.01 rtol = change_tol * 10   # v_ang["3"]
 
 
 
