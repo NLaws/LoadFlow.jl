@@ -15,8 +15,8 @@ using Test
 # to zero along with Δxⁱ 
 
 netdict = Dict(
-    :network => Dict(:substation_bus => "1", :Sbase => 1),
-    :conductors => [
+    :Network => Dict(:substation_bus => "1", :Sbase => 1),
+    :Conductor => [
         Dict(
             :busses => ("1", "2"),
             :r1 => 0.0,
@@ -36,7 +36,7 @@ netdict = Dict(
             :length => 1
         ),
     ],
-    :loads => [
+    :Load => [
         Dict(
             :bus => "3",
             :kws1 => [.0028653],
@@ -47,7 +47,7 @@ netdict = Dict(
             :kws1 => [-0.0006661]
         ) # a "generator" with P and V specified
     ],
-    :voltage_regulators => [
+    :VoltageRegulator => [
         Dict(
             :bus => "2",
             :vreg_pu => 1.05
